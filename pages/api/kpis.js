@@ -33,7 +33,10 @@ async function fetchOTs() {
       },
       body: JSON.stringify({
         Action: 'Find',
-        Properties: { Locale: 'en-US' },
+        Properties: {
+          Locale: 'en-US',
+          Fields: ['Maquina', 'Prioridad', 'Fecha Pedido', 'Fecha Reparacion'],
+        },
         Rows: [],
       }),
     }
