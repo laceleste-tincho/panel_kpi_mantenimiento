@@ -11,10 +11,10 @@ export const MACHINES = [
   { key: 'Guillotina - PS - GT 02', label: 'Guillotina 02', code: 'PS-GT02', icon: '⚙️', color: '#ec4899' },
 ];
 
-// In-memory cache — avoids hammering APIs on every render
+// In-memory cache
 let _cache = null;
 let _cacheTs = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 min
+const CACHE_TTL = 5 * 60 * 1000;
 
 // ─── AppSheet ──────────────────────────────────────────────────────────────────
 async function fetchOTs() {
@@ -29,32 +29,37 @@ async function fetchOTs() {
       headers: {
         ApplicationAccessKey: APPSHEET_ACCESS_KEY,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         Action: 'Find',
-        Properties: { Locale: 'en-US', 'Page Size': 10000 },
+        Properties: { Locale: 'en-US' },
         Rows: [],
       }),
     }
   );
 
   const txt = await res.text();
+  console.log('[AppSheet] status:', res.status, '| length:', txt?.length, '| preview:', txt?.slice(0, 300));
+
   if (!txt || txt.trim() === '') {
-    throw new Error(`AppSheet devolvió respuesta vacía (status ${res.status}). Verificá que la Access Key sea correcta.`);
+    throw new Error(`AppSheet devolvió respuesta vacía (status ${res.status}). Key usada: ...${APPSHEET_ACCESS_KEY?.slice(-6)}`);
   }
 
   let data;
   try {
     data = JSON.parse(txt);
   } catch (e) {
-    throw new Error(`AppSheet devolvió respuesta inválida (status ${res.status}): ${txt.slice(0, 300)}`);
+    throw new Error(`AppSheet JSON inválido (status ${res.status}): ${txt.slice(0, 400)}`);
   }
 
   if (!res.ok) {
-    throw new Error(`AppSheet error ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
+    throw new Error(`AppSheet error ${res.status}: ${JSON.stringify(data).slice(0, 400)}`);
   }
 
-  return Array.isArray(data) ? data : data.Rows || [];
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.Rows)) return data.Rows;
+  throw new Error(`AppSheet formato inesperado: ${JSON.stringify(data).slice(0, 300)}`);
 }
 
 // ─── Google Sheets CSV ─────────────────────────────────────────────────────────
@@ -108,13 +113,10 @@ async function fetchProduccion() {
 function parseDate(str) {
   if (!str) return null;
   str = String(str).trim();
-
-  // ISO: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const d = new Date(str.length === 10 ? str + 'T00:00:00' : str);
     return isNaN(d) ? null : d;
   }
-  // DD/MM/YYYY or DD/MM/YYYY HH:mm
   const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (m1) {
     const d = new Date(`${m1[3]}-${m1[2].padStart(2, '0')}-${m1[1].padStart(2, '0')}T00:00:00`);
@@ -133,7 +135,6 @@ function inPeriod(date, year, month) {
 
 // ─── KPI calculator ───────────────────────────────────────────────────────────
 function calcKPIs(machineKey, ots, prodRows, year, month) {
-  // OTs for this machine in the selected period
   const machineOTs = ots.filter(ot => {
     const name = (ot['Maquina'] || ot['maquina'] || ot['MAQUINA'] || '').trim();
     if (name !== machineKey) return false;
@@ -160,7 +161,6 @@ function calcKPIs(machineKey, ots, prodRows, year, month) {
   const mttrH = validRepairs > 0 ? totalRepairMin / validRepairs / 60 : 0;
   const avgPriority = priorities.length ? priorities.reduce((a, b) => a + b, 0) / priorities.length : null;
 
-  // Production hours for this machine in the selected period
   const prod = prodRows.filter(r => {
     if (r.maquina.trim() !== machineKey) return false;
     return inPeriod(parseDate(r.fecha), year, month);
@@ -190,7 +190,6 @@ export default async function handler(req, res) {
   const { year, month } = req.query;
 
   try {
-    // Cache raw data
     if (!_cache || Date.now() - _cacheTs > CACHE_TTL) {
       const [ots, prodRows] = await Promise.all([fetchOTs(), fetchProduccion()]);
       _cache = { ots, prodRows };
@@ -198,7 +197,6 @@ export default async function handler(req, res) {
     }
     const { ots, prodRows } = _cache;
 
-    // Available years from OTs
     const years = [
       ...new Set(
         ots
@@ -207,13 +205,11 @@ export default async function handler(req, res) {
       ),
     ].sort();
 
-    // KPIs per machine
     const kpis = MACHINES.map(m => ({
       ...m,
       ...calcKPIs(m.key, ots, prodRows, year, month),
     }));
 
-    // Summary
     const withFail = kpis.filter(k => k.failures > 0);
     const summary = {
       totalFailures: kpis.reduce((s, k) => s + k.failures, 0),
@@ -222,14 +218,11 @@ export default async function handler(req, res) {
       avgMTTR: withFail.length ? round1(withFail.reduce((s, k) => s + k.mttr, 0) / withFail.length) : 0,
     };
 
-    // Monthly trend (12 months back or whole selected year)
     const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const trendPeriods = [];
 
     if (year && !month) {
-      for (let mo = 1; mo <= 12; mo++) {
-        trendPeriods.push({ y: +year, m: mo });
-      }
+      for (let mo = 1; mo <= 12; mo++) trendPeriods.push({ y: +year, m: mo });
     } else if (!year) {
       const now = new Date();
       for (let i = 11; i >= 0; i--) {
@@ -255,7 +248,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
     res.json({ kpis, summary, years, trend, machines: MACHINES });
   } catch (err) {
-    console.error('[kpis]', err);
+    console.error('[kpis error]', err);
     res.status(500).json({ error: err.message });
   }
 }
