@@ -23,17 +23,23 @@ export default async function handler(req, res) {
   const data = JSON.parse(txt);
   const rows = Array.isArray(data) ? data : (data?.Rows || []);
 
-  // Contar OTs por nombre exacto de máquina
-  const counts = {};
-  for (const row of rows) {
-    const name = (row['Maquina'] || row['maquina'] || row['MAQUINA'] || '(sin nombre)').trim();
-    counts[name] = (counts[name] || 0) + 1;
-  }
+  // Mostrar las claves exactas (con bytes) de la primera fila
+  const firstRow = rows[0] || {};
+  const columnKeys = Object.keys(firstRow).map(k => ({
+    key: k,
+    bytes: [...k].map(c => c.charCodeAt(0)),
+    sampleValue: String(firstRow[k]).slice(0, 60),
+  }));
 
-  // Ordenar por cantidad desc
-  const sorted = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count, bytes: [...name].map(c => c.charCodeAt(0)) }));
+  // Contar con la columna correcta
+  const maquinaKey = Object.keys(firstRow).find(k =>
+    k.toLowerCase().replace(/[^a-z]/g, '') === 'maquina'
+  ) || 'NO ENCONTRADO';
 
-  res.json({ total: rows.length, maquinas: sorted });
+  res.json({
+    totalRows: rows.length,
+    maquinaColumnKey: maquinaKey,
+    maquinaColumnBytes: [...maquinaKey].map(c => c.charCodeAt(0)),
+    allColumns: columnKeys,
+  });
 }
