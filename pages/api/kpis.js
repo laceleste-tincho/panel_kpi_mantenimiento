@@ -123,9 +123,11 @@ function parseDate(str) {
     const d = new Date(str.length === 10 ? str + 'T00:00:00' : str);
     return isNaN(d) ? null : d;
   }
-  const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  // AppSheet devuelve MM/DD/YYYY (aunque se cargue como DD/MM)
+  const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{2}:\d{2}:\d{2}))?/);
   if (m1) {
-    const d = new Date(`${m1[3]}-${m1[2].padStart(2, '0')}-${m1[1].padStart(2, '0')}T00:00:00`);
+    const time = m1[4] || '00:00:00';
+    const d = new Date(`${m1[3]}-${m1[1].padStart(2, '0')}-${m1[2].padStart(2, '0')}T${time}`);
     return isNaN(d) ? null : d;
   }
   const d = new Date(str);
@@ -256,7 +258,6 @@ export default async function handler(req, res) {
       .filter(Boolean);
 
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
-    console.log('[DEBUG counts]', kpis.map(k => `${k.label}: ${k.failures}`).join(' | '));
     res.json({ kpis, summary, years, trend, machines: MACHINES });
   } catch (err) {
     console.error('[kpis error]', err);
