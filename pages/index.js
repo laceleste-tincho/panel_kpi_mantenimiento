@@ -23,8 +23,9 @@ function availLabel(v) {
 }
 function priorityLabel(v) {
   if (!v) return null;
-  if (v <= 1.5) return { text: 'ALTA', cls: 'badge-red' };
-  if (v <= 2.5) return { text: 'MEDIA', cls: 'badge-amber' };
+  // 3 = ALTA (más urgente), 2 = MEDIA, 1 = BAJA
+  if (v >= 2.5) return { text: 'ALTA', cls: 'badge-red' };
+  if (v >= 1.5) return { text: 'MEDIA', cls: 'badge-amber' };
   return { text: 'BAJA', cls: 'badge-green' };
 }
 function fmt(n, dec = 1) {

@@ -158,11 +158,10 @@ function calcKPIs(machineKey, ots, prodRows, year, month) {
   for (const ot of machineOTs) {
     const fp = parseDate(ot['Fecha Pedido'] || ot['FECHA PEDIDO'] || ot['FechaPedido'] || '');
     const fr = parseDate(ot['Fecha Reparacion'] || ot['FECHA REPARACION'] || ot['FechaReparacion'] || '');
-    // Solo incluir en MTTR si ambas fechas tienen hora real (no 00:00:00)
-    // Registros anteriores al 13/2/2026 tienen hora 00:00:00 y no son válidos
-    const fpHasTime = fp && (fp.getHours() !== 0 || fp.getMinutes() !== 0);
+    // Solo incluir en MTTR si Fecha Reparacion tiene hora real registrada (no 00:00:00)
+    // Antes del 13/2/2026 no se registraban horas, esas OTs no aportan al MTTR
     const frHasTime = fr && (fr.getHours() !== 0 || fr.getMinutes() !== 0);
-    if (fp && fr && fr >= fp && fpHasTime && frHasTime) {
+    if (fp && fr && fr >= fp && frHasTime) {
       const diffMin = (fr - fp) / 60000;
       if (diffMin > 0) { totalRepairMin += diffMin; validRepairs++; }
     }
