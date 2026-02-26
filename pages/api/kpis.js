@@ -18,6 +18,10 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 // ─── AppSheet ──────────────────────────────────────────────────────────────────
 async function fetchOTs() {
+  if (!APPSHEET_ACCESS_KEY) {
+    throw new Error('Falta la variable de entorno APPSHEET_ACCESS_KEY en Vercel');
+  }
+
   const res = await fetch(
     `https://api.appsheet.com/api/v2/apps/${APPSHEET_APP_ID}/tables/OTs/Action`,
     {
@@ -33,11 +37,23 @@ async function fetchOTs() {
       }),
     }
   );
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`AppSheet ${res.status}: ${txt.slice(0, 200)}`);
+
+  const txt = await res.text();
+  if (!txt || txt.trim() === '') {
+    throw new Error(`AppSheet devolvió respuesta vacía (status ${res.status}). Verificá que la Access Key sea correcta.`);
   }
-  const data = await res.json();
+
+  let data;
+  try {
+    data = JSON.parse(txt);
+  } catch (e) {
+    throw new Error(`AppSheet devolvió respuesta inválida (status ${res.status}): ${txt.slice(0, 300)}`);
+  }
+
+  if (!res.ok) {
+    throw new Error(`AppSheet error ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
+  }
+
   return Array.isArray(data) ? data : data.Rows || [];
 }
 
