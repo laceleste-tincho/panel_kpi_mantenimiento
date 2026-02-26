@@ -16,6 +16,7 @@ function availColor(v) {
   return '#ef4444';
 }
 function availLabel(v) {
+  if (v === null || v === undefined) return { text: 'SIN DATOS', cls: 'badge-muted' };
   if (v >= AVAIL_THRESHOLDS.excellent) return { text: 'EXCELENTE', cls: 'badge-green' };
   if (v >= AVAIL_THRESHOLDS.good) return { text: 'NORMAL', cls: 'badge-amber' };
   if (v >= AVAIL_THRESHOLDS.warn) return { text: 'ATENCIÓN', cls: 'badge-amber' };
@@ -57,19 +58,19 @@ function Gauge({ value, size = 110, color, animate = true }) {
   const r = (size - 14) / 2;
   const circ = 2 * Math.PI * r;
   const [dash, setDash] = useState(0);
+  const isNull = value === null || value === undefined;
 
   useEffect(() => {
-    const t = setTimeout(() => setDash((value / 100) * circ), animate ? 200 : 0);
+    const t = setTimeout(() => setDash(isNull ? 0 : (value / 100) * circ), animate ? 200 : 0);
     return () => clearTimeout(t);
-  }, [value, circ, animate]);
+  }, [value, circ, animate, isNull]);
 
-  const col = color || availColor(value);
+  const col = isNull ? 'var(--text-muted)' : (color || availColor(value));
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', overflow: 'visible' }}>
-      {/* Glow filter */}
       <defs>
-        <filter id={`glow-${col.replace('#', '')}`}>
+        <filter id={`glow-${col.replace('#', '').replace('(', '').replace(')', '').replace(/,/g,'').replace(/ /g,'')}`}>
           <feGaussianBlur stdDeviation="3" result="coloredBlur" />
           <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
@@ -77,25 +78,43 @@ function Gauge({ value, size = 110, color, animate = true }) {
       {/* Track */}
       <circle cx={size / 2} cy={size / 2} r={r} fill="none"
         stroke="rgba(255,255,255,0.04)" strokeWidth="9" />
-      {/* Value arc */}
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke={col} strokeWidth="9" strokeLinecap="round"
-        strokeDasharray={`${dash} ${circ}`}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)' }}
-        filter={`url(#glow-${col.replace('#', '')})`}
-      />
+      {/* Value arc — only if we have data */}
+      {!isNull && (
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={col} strokeWidth="9" strokeLinecap="round"
+          strokeDasharray={`${dash} ${circ}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)' }}
+        />
+      )}
       {/* Center text */}
-      <text x={size / 2} y={size / 2 - 4} textAnchor="middle"
-        fill={col} fontSize="20" fontFamily="'Barlow Condensed', sans-serif"
-        fontWeight="800" letterSpacing="-0.5">
-        {fmt(value, 0)}%
-      </text>
-      <text x={size / 2} y={size / 2 + 13} textAnchor="middle"
-        fill="rgba(255,255,255,0.3)" fontSize="9.5" fontFamily="'Barlow Condensed', sans-serif"
-        fontWeight="500" letterSpacing="1.5">
-        DISP
-      </text>
+      {isNull ? (
+        <>
+          <text x={size / 2} y={size / 2 + 4} textAnchor="middle"
+            fill="var(--text-muted)" fontSize="14" fontFamily="'Barlow Condensed', sans-serif"
+            fontWeight="700" letterSpacing="0.5">
+            S/D
+          </text>
+          <text x={size / 2} y={size / 2 + 18} textAnchor="middle"
+            fill="var(--text-muted)" fontSize="8.5" fontFamily="'Barlow Condensed', sans-serif"
+            fontWeight="500" letterSpacing="1.5">
+            SIN DATOS
+          </text>
+        </>
+      ) : (
+        <>
+          <text x={size / 2} y={size / 2 - 4} textAnchor="middle"
+            fill={col} fontSize="20" fontFamily="'Barlow Condensed', sans-serif"
+            fontWeight="800" letterSpacing="-0.5">
+            {fmt(value, 0)}%
+          </text>
+          <text x={size / 2} y={size / 2 + 13} textAnchor="middle"
+            fill="rgba(255,255,255,0.3)" fontSize="9.5" fontFamily="'Barlow Condensed', sans-serif"
+            fontWeight="500" letterSpacing="1.5">
+            DISP
+          </text>
+        </>
+      )}
     </svg>
   );
 }
@@ -143,14 +162,15 @@ function SummaryCard({ label, value, unit, color, delay = 0, icon }) {
 
 // ─── Metric row item ──────────────────────────────────────────────────────────
 function MetricItem({ label, value, unit, highlight }) {
+  const isNull = value === null || value === undefined || value === '—';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase' }}>
         {label}
       </span>
-      <span style={{ color: highlight || 'var(--text-primary)', fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 700, lineHeight: 1 }}>
-        {value}
-        {unit && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 3 }}>{unit}</span>}
+      <span style={{ color: isNull ? 'var(--text-muted)' : (highlight || 'var(--text-primary)'), fontFamily: 'var(--font-display)', fontSize: isNull ? '13px' : '22px', fontWeight: 700, lineHeight: 1 }}>
+        {isNull ? 'S/D' : value}
+        {!isNull && unit && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 3 }}>{unit}</span>}
       </span>
     </div>
   );

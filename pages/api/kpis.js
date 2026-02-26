@@ -181,16 +181,20 @@ function calcKPIs(machineKey, ots, prodRows, year, month) {
   const mtbfH = failures > 0 ? ttoH / failures : ttoH;
 
   const denom = mtbfH + mttrH;
-  const avail = denom > 0 ? (mtbfH / denom) * 100 : failures === 0 ? 100 : 0;
+  const avail = denom > 0 ? (mtbfH / denom) * 100 : null;
+
+  // Sin TTO y sin fallas = sin datos suficientes para calcular nada
+  const noData = ttoH === 0 && failures === 0;
 
   return {
     failures,
-    mtbf: round1(mtbfH),
-    mttr: round1(mttrH),
-    availability: round1(Math.min(avail, 100)),
+    mtbf: (noData || ttoH === 0) ? null : round1(mtbfH),
+    mttr: validRepairs === 0 ? null : round1(mttrH),
+    availability: noData ? null : (avail !== null ? round1(Math.min(avail, 100)) : null),
     avgPriority: avgPriority ? round1(avgPriority) : null,
     tto: round1(ttoH),
     validRepairs,
+    noData,
   };
 }
 
