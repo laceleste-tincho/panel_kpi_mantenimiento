@@ -180,25 +180,33 @@ function calcKPIs(machineKey, ots, prodRows, year, month) {
   const ttoH = ttoMin / 60;
   const mtbfH = failures > 0 ? ttoH / failures : ttoH;
 
-  const denom = mtbfH + mttrH;
-  const avail = denom > 0 ? (mtbfH / denom) * 100 : null;
+  const mtbf = (ttoH === 0 || failures === 0) ? null : round1(mtbfH);
+  const mttr = validRepairs === 0 ? null : round1(mttrH);
 
-  // Sin TTO y sin fallas = sin datos suficientes para calcular nada
-  const noData = ttoH === 0 && failures === 0;
+  // Disponibilidad solo si ambos MTBF y MTTR están disponibles
+  let availability = null;
+  if (mtbf !== null && mttr !== null) {
+    const denom = mtbfH + mttrH;
+    availability = denom > 0 ? round1(Math.min((mtbfH / denom) * 100, 100)) : null;
+  }
+
+  // Tasa de falla lambda = fallas / TTO (inverso del MTBF), en fallas/hora
+  const lambda = (ttoH > 0 && failures > 0) ? round4(failures / ttoH) : null;
 
   return {
     failures,
-    mtbf: (noData || ttoH === 0) ? null : round1(mtbfH),
-    mttr: validRepairs === 0 ? null : round1(mttrH),
-    availability: noData ? null : (avail !== null ? round1(Math.min(avail, 100)) : null),
+    mtbf,
+    mttr,
+    availability,
+    lambda,
     avgPriority: avgPriority ? round1(avgPriority) : null,
     tto: round1(ttoH),
     validRepairs,
-    noData,
   };
 }
 
 function round1(n) { return Math.round(n * 10) / 10; }
+function round4(n) { return Math.round(n * 10000) / 10000; }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {

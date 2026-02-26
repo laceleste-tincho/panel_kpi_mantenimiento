@@ -179,7 +179,7 @@ function MetricItem({ label, value, unit, highlight }) {
 // ─── Machine card ─────────────────────────────────────────────────────────────
 function MachineCard({ data, delay = 0 }) {
   const [hovered, setHovered] = useState(false);
-  const { label, code, icon, color, availability, mtbf, mttr, failures, avgPriority, tto } = data;
+  const { label, code, icon, color, availability, mtbf, mttr, failures, avgPriority, tto, lambda } = data;
   const al = availLabel(availability);
   const pl = priorityLabel(avgPriority);
 
@@ -231,7 +231,7 @@ function MachineCard({ data, delay = 0 }) {
       </div>
 
       {/* Bottom stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
           <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Fallas</span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: failures > 10 ? '#ef4444' : 'var(--text-primary)' }}>{failures}</span>
@@ -241,10 +241,16 @@ function MachineCard({ data, delay = 0 }) {
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800 }}>{fmt(tto, 0)}<span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginLeft: 2 }}>hs</span></span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>λ Tasa</span>
+          {lambda !== null && lambda !== undefined
+            ? <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800 }}>{lambda}<span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginLeft: 2 }}>f/h</span></span>
+            : <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)' }}>S/D</span>}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
           <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Prior. avg</span>
           {pl
             ? <span className={`badge ${pl.cls}`} style={{ marginTop: 2 }}>P{fmt(avgPriority)} · {pl.text}</span>
-            : <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)' }}>—</span>}
+            : <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)' }}>S/D</span>}
         </div>
       </div>
     </div>
