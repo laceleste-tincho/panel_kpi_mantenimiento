@@ -256,6 +256,7 @@ export default async function handler(req, res) {
       .filter(Boolean);
 
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+    console.log('[DEBUG counts]', kpis.map(k => `${k.label}: ${k.failures}`).join(' | '));
     res.json({ kpis, summary, years, trend, machines: MACHINES });
   } catch (err) {
     console.error('[kpis error]', err);
