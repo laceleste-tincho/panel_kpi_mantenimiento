@@ -33,12 +33,9 @@ async function fetchOTs() {
       },
       body: JSON.stringify({
         Action: 'Find',
-        Properties: {
-          Locale: 'en-US',
-          Fields: ['Maquina', 'Prioridad', 'Fecha Pedido', 'Fecha Reparacion'],
-        },
+        Properties: { Locale: 'en-US' },
         Rows: [],
-      }),
+      })
     }
   );
 
@@ -60,9 +57,15 @@ async function fetchOTs() {
     throw new Error(`AppSheet error ${res.status}: ${JSON.stringify(data).slice(0, 400)}`);
   }
 
-  if (Array.isArray(data)) return data;
-  if (data && Array.isArray(data.Rows)) return data.Rows;
-  throw new Error(`AppSheet formato inesperado: ${JSON.stringify(data).slice(0, 300)}`);
+  const rows = Array.isArray(data) ? data : (data?.Rows || []);
+  if (!rows.length) throw new Error(`AppSheet formato inesperado: ${JSON.stringify(data).slice(0, 300)}`);
+
+  // Filtramos solo las máquinas críticas para reducir memoria
+  const machineKeys = new Set(MACHINES.map(m => m.key));
+  return rows.filter(r => {
+    const name = (r['Maquina'] || r['maquina'] || r['MAQUINA'] || '').trim();
+    return machineKeys.has(name);
+  });
 }
 
 // ─── Google Sheets CSV ─────────────────────────────────────────────────────────
