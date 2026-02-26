@@ -225,29 +225,29 @@ function MachineCard({ data, delay = 0 }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <Gauge value={availability} color={color} size={104} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-          <MetricItem label="MTBF" value={fmt(mtbf)} unit="hs" highlight={mtbf > 0 ? undefined : 'var(--text-muted)'} />
-          <MetricItem label="MTTR" value={fmt(mttr)} unit="hs" highlight={mttr > 10 ? '#ef4444' : undefined} />
+          <MetricItem label="T. Medio Entre Fallas" value={fmt(mtbf)} unit="hs" highlight={mtbf > 0 ? undefined : 'var(--text-muted)'} />
+          <MetricItem label="T. Medio de Reparación" value={fmt(mttr)} unit="hs" highlight={mttr > 10 ? '#ef4444' : undefined} />
         </div>
       </div>
 
       {/* Bottom stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
-          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Fallas</span>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Fallas Registradas</span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800, color: failures > 10 ? '#ef4444' : 'var(--text-primary)' }}>{failures}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
-          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>TTO</span>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Tiempo Operativo</span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 800 }}>{fmt(tto, 0)}<span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginLeft: 2 }}>hs</span></span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
-          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>λ Tasa</span>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Tasa de Falla</span>
           {lambda !== null && lambda !== undefined
             ? <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 800 }}>{lambda}<span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginLeft: 2 }}>f/h</span></span>
             : <span style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 700, color: 'var(--text-muted)' }}>S/D</span>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', textAlign: 'center' }}>
-          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Prior. avg</span>
+          <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}>Prioridad Promedio</span>
           {pl
             ? <span className={`badge ${pl.cls}`} style={{ marginTop: 2 }}>P{fmt(avgPriority)} · {pl.text}</span>
             : <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)' }}>S/D</span>}
@@ -433,10 +433,10 @@ export default function Dashboard() {
             <>
               {/* ─ Summary cards ─────────────────────────────────────────────── */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-                <SummaryCard label="Fallas Totales" value={data?.summary?.totalFailures ?? 0} icon="🔴" color="#ef4444" delay={0} />
-                <SummaryCard label="Disponibilidad Promedio" value={data?.summary?.avgAvailability ?? 0} unit="%" icon="📊" color={availColor(data?.summary?.avgAvailability ?? 0)} delay={80} />
-                <SummaryCard label="MTBF Promedio" value={data?.summary?.avgMTBF ?? 0} unit="hs" icon="⏱" color="#3b82f6" delay={160} />
-                <SummaryCard label="MTTR Promedio" value={data?.summary?.avgMTTR ?? 0} unit="hs" icon="🔧" color="#8b5cf6" delay={240} />
+                <SummaryCard label="Fallas Registradas" value={data?.summary?.totalFailures ?? 0} icon="🔴" color="#ef4444" delay={0} />
+                <SummaryCard label="Disponibilidad Operativa" value={data?.summary?.avgAvailability ?? 0} unit="%" icon="📊" color={availColor(data?.summary?.avgAvailability ?? 0)} delay={80} />
+                <SummaryCard label="Tiempo Medio Entre Fallas" value={data?.summary?.avgMTBF ?? 0} unit="hs" icon="⏱" color="#3b82f6" delay={160} />
+                <SummaryCard label="Tiempo Medio de Reparación" value={data?.summary?.avgMTTR ?? 0} unit="hs" icon="🔧" color="#8b5cf6" delay={240} />
               </div>
 
               {/* ─ Machine cards ─────────────────────────────────────────────── */}
@@ -459,8 +459,8 @@ export default function Dashboard() {
                   </h2>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {[
-                      { key: 'availability', label: 'Disponibilidad' },
-                      { key: 'mtbf', label: 'MTBF / MTTR' },
+                      { key: 'availability', label: 'Disp. Operativa' },
+                      { key: 'mtbf', label: 'T. Medio Falla / Rep.' },
                       { key: 'trend', label: 'Evolución' },
                     ].map(t => (
                       <button key={t.key} className={`chart-tab ${activeChart === t.key ? 'active' : ''}`}
@@ -508,7 +508,7 @@ export default function Dashboard() {
                   {activeChart === 'mtbf' && mtbfChartData && (
                     <>
                       <p style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--text-secondary)', marginBottom: 20 }}>
-                        MTBF vs MTTR por Máquina (horas)
+                        Tiempo Medio Entre Fallas vs Tiempo Medio de Reparación (horas)
                       </p>
                       <ResponsiveContainer width="100%" height={320}>
                         <BarChart data={mtbfChartData} barGap={4} barCategoryGap="35%">
@@ -520,8 +520,8 @@ export default function Dashboard() {
                             axisLine={false} tickLine={false} tickFormatter={v => `${v}h`} />
                           <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                           <Legend wrapperStyle={{ fontFamily: "'Barlow Condensed'", fontSize: 12, color: 'var(--text-secondary)' }} />
-                          <Bar dataKey="MTBF" name="MTBF" fill="#3b82f6" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
-                          <Bar dataKey="MTTR" name="MTTR" fill="#ef4444" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
+                          <Bar dataKey="MTBF" name="T. Medio Entre Fallas" fill="#3b82f6" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
+                          <Bar dataKey="MTTR" name="T. Medio de Reparación" fill="#ef4444" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
                         </BarChart>
                       </ResponsiveContainer>
                     </>
