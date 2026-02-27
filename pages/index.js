@@ -226,7 +226,7 @@ function MachineCard({ data, delay = 0 }) {
         <Gauge value={availability} color={color} size={104} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
           <MetricItem label="T. Medio Entre Fallas" value={fmt(mtbf)} unit="hs" highlight={mtbf > 0 ? undefined : 'var(--text-muted)'} />
-          <MetricItem label="T. Medio de Reparación" value={fmt(mttr)} unit="hs" highlight={mttr > 10 ? '#ef4444' : undefined} />
+          <MetricItem label="T. Medio Hasta Reparación" value={fmt(mttr)} unit="hs" highlight={mttr > 10 ? '#ef4444' : undefined} />
         </div>
       </div>
 
@@ -521,7 +521,7 @@ export default function Dashboard() {
                           <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                           <Legend wrapperStyle={{ fontFamily: "'Barlow Condensed'", fontSize: 12, color: 'var(--text-secondary)' }} />
                           <Bar dataKey="MTBF" name="T. Medio Entre Fallas" fill="#3b82f6" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
-                          <Bar dataKey="MTTR" name="T. Medio de Reparación" fill="#ef4444" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
+                          <Bar dataKey="MTTR" name="T. Medio Hasta Reparación" fill="#ef4444" fillOpacity={0.85} radius={[3, 3, 0, 0]} unit="h" />
                         </BarChart>
                       </ResponsiveContainer>
                     </>
